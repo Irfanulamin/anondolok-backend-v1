@@ -105,7 +105,8 @@ class AuthController {
         );
       }
 
-      // Generate reset code
+      // Generate reset code - IMPORT THIS FROM YOUR MODULE
+      const { generateResetCode } = require("../config/email"); // FIX PATH
       const resetCode = generateResetCode();
       const resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
@@ -116,7 +117,6 @@ class AuthController {
 
       // Check if transporter is available
       const transporter = getEmailTransporter();
-      console.log(transporter);
       if (!transporter) {
         console.error("Email service is not configured");
         return sendErrorResponse(
@@ -126,27 +126,32 @@ class AuthController {
         );
       }
 
-      // Send email
+      // Send email - WRAP IN TRY-CATCH
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Password Reset Code",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Password Reset Request</h2>
-            <p>You have requested to reset your password. Use the following 6-digit code to reset your password:</p>
-            <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-              <h1 style="color: #007bff; font-size: 32px; margin: 0; letter-spacing: 5px;">${resetCode}</h1>
-            </div>
-            <p style="color: #666;">This code will expire in 10 minutes.</p>
-            <p style="color: #666;">If you didn't request this password reset, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>You have requested to reset your password. Use the following 6-digit code to reset your password:</p>
+          <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #007bff; font-size: 32px; margin: 0; letter-spacing: 5px;">${resetCode}</h1>
           </div>
-        `,
+          <p style="color: #666;">This code will expire in 10 minutes.</p>
+          <p style="color: #666;">If you didn't request this password reset, please ignore this email.</p>
+        </div>
+      `,
       };
 
-      await transporter.sendMail(mailOptions);
-
-      sendSuccessResponse(res, 200, "Reset code sent to your email");
+      // FIX: ADD TRY-CATCH FOR EMAIL SENDING
+      try {
+        await transporter.sendMail(mailOptions);
+        sendSuccessResponse(res, 200, "Reset code sent to your email");
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError);
+        return sendErrorResponse(res, 500, "Failed to send reset code");
+      }
     } catch (error) {
       console.error("Forgot password error:", error);
       sendErrorResponse(res, 500, "Failed to send reset code");

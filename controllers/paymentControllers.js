@@ -91,7 +91,6 @@ class PaymentController {
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))
         .lean();
-      console.log(payments);
 
       const total = await Payment.countDocuments(query);
 

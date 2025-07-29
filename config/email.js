@@ -1,7 +1,3 @@
-// =============================================
-// 3. CONFIG/EMAIL.JS - Email Configuration
-// =============================================
-
 const nodemailer = require("nodemailer");
 
 let transporter;
@@ -28,9 +24,16 @@ const initializeEmailTransporter = () => {
     console.error("Failed to create email transporter:", error);
   }
 };
+
 const getEmailTransporter = () => transporter;
+
+// ADD THIS MISSING FUNCTION
+const generateResetCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 module.exports = {
   initializeEmailTransporter,
   getEmailTransporter,
+  generateResetCode, // EXPORT THIS
 };
