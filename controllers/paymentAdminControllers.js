@@ -35,7 +35,7 @@ class PaymenentAdminController {
   static async yearlyWiseAnalysisPerUser(req, res) {
     try {
       const memberId = req.params.memberId;
-
+      console.log(memberId);
       if (!memberId) {
         return res
           .status(400)
