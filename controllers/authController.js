@@ -3,8 +3,9 @@ const {
   sendErrorResponse,
   sendSuccessResponse,
 } = require("../utils/responseHelper");
-const { generateToken, generateResetCode } = require("../utils/tokenHelper");
+const { generateToken } = require("../utils/tokenHelper");
 const { getEmailTransporter } = require("../config/email");
+const bcrypt = require("bcrypt");
 
 class AuthController {
   // Register User
@@ -89,11 +90,9 @@ class AuthController {
     }
   }
 
-  // Forgot Password
   static async forgotPassword(req, res) {
     try {
       const { email } = req.body;
-
       // Find user
       const user = await User.findOne({ email, isActive: true });
       if (!user) {
@@ -108,11 +107,13 @@ class AuthController {
       // Generate reset code - IMPORT THIS FROM YOUR MODULE
       const { generateResetCode } = require("../config/email"); // FIX PATH
       const resetCode = generateResetCode();
-      const resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-      // Save reset code to user
-      user.resetCode = resetCode;
-      user.resetCodeExpires = resetCodeExpires;
+      // Hash the reset code before saving
+      const saltRounds = 10;
+      const hashedResetCode = await bcrypt.hash(resetCode, saltRounds);
+
+      // Save hashed reset code to user
+      user.resetCode = hashedResetCode;
       await user.save();
 
       // Check if transporter is available
@@ -138,7 +139,6 @@ class AuthController {
           <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
             <h1 style="color: #007bff; font-size: 32px; margin: 0; letter-spacing: 5px;">${resetCode}</h1>
           </div>
-          <p style="color: #666;">This code will expire in 10 minutes.</p>
           <p style="color: #666;">If you didn't request this password reset, please ignore this email.</p>
         </div>
       `,
@@ -169,19 +169,28 @@ class AuthController {
         return sendErrorResponse(res, 404, "User not found");
       }
 
-      // Check if reset code is valid and not expired
-      if (!user.resetCode || user.resetCode !== code) {
+      // Check if reset code exists and verify it with bcrypt
+      if (!user.resetCode) {
         return sendErrorResponse(res, 400, "Invalid reset code");
       }
 
-      if (!user.resetCodeExpires || user.resetCodeExpires < new Date()) {
-        return sendErrorResponse(res, 400, "Reset code has expired");
+      const isValidCode = await bcrypt.compare(code, user.resetCode);
+      if (!isValidCode) {
+        return sendErrorResponse(res, 400, "Invalid reset code");
       }
+
       // Update user password and clear reset code
-      user.password = newPassword;
-      user.resetCode = null;
-      user.resetCodeExpires = null;
-      await user.save();
+      await User.updateOne(
+        { email },
+        {
+          $set: {
+            password: newPassword,
+          },
+          $unset: {
+            resetCode: null,
+          },
+        }
+      );
 
       sendSuccessResponse(res, 200, "Password reset successfully");
     } catch (error) {
