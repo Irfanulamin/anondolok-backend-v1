@@ -19,6 +19,7 @@ class PaymenentAdminController {
             totalPeriodical: { $sum: "$periodicalDeposit" },
             totalOthers: { $sum: "$othersAmount" },
             othersComment: { $first: "$othersComment" },
+            monthsOfPayment: { $first: "$monthsOfPayment" },
           },
         },
         { $sort: { "_id.year": -1, "_id.month": -1 } },

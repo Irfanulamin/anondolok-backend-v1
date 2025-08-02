@@ -59,6 +59,11 @@ const paymentSchema = new mongoose.Schema({
     trim: true,
     default: "",
   },
+  monthsOfPayment: {
+    type: String,
+    trim: true,
+    default: "",
+  },
   totalAmount: {
     type: Number,
     required: true,
