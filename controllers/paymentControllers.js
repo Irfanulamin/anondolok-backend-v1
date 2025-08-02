@@ -143,7 +143,7 @@ class PaymentController {
       payment.periodicalDeposit = parseFloat(data.periodicalDeposit) || 0;
       payment.othersAmount = parseFloat(data.othersAmount) || 0;
       payment.othersComment = data.othersComment || "";
-      payment.othersComment = data.monthsOfPayment || "";
+      payment.monthsOfPayment = data.monthsOfPayment || "";
       // Recalculate totalAmount
       payment.totalAmount =
         payment.monthlySubscriptionFee +
