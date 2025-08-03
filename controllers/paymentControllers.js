@@ -159,6 +159,27 @@ class PaymentController {
       sendErrorResponse(res, 400, err.message);
     }
   }
+
+  static async deletePayment(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        throw new Error("Payment ID is required");
+      }
+
+      const payment = await Payment.findById(id);
+      if (!payment) {
+        throw new Error("Payment record not found");
+      }
+
+      await Payment.findByIdAndDelete(id);
+
+      sendSuccessResponse(res, 200, "Payment deleted successfully");
+    } catch (err) {
+      sendErrorResponse(res, 400, err.message);
+    }
+  }
 }
 
 module.exports = PaymentController;
