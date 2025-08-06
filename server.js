@@ -29,7 +29,7 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 app.get("/", (req, res) => {
-  res.send("<h1>Server is running</h1>");
+  res.send("<h1>Server is running for anondolok</h1>");
 });
 
 module.exports = app;
