@@ -137,6 +137,10 @@ class PaymentController {
       if (!payment) throw new Error("Payment record not found");
 
       // Update payment fields
+      payment.memberName = data.memberName;
+      payment.typeOfDeposit = data.typeOfDeposit;
+      payment.bankBranch = data.bankBranch;
+      payment.bankName = data.bankName;
       payment.monthlySubscriptionFee =
         parseFloat(data.monthlySubscriptionFee) || 0;
       payment.finesPenalty = parseFloat(data.finesPenalty) || 0;

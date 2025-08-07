@@ -1,4 +1,5 @@
 const ArchivePayment = require("../models/archivePayment");
+const Payment = require("../models/payment");
 
 class ArchivePaymentController {
   // GET /api/archive-payments - Returns all archive payment data exactly as stored
@@ -120,6 +121,45 @@ class ArchivePaymentController {
     } catch (error) {
       res.status(500).json({
         error: "Failed to fetch user yearly payments",
+        message: error.message,
+      });
+    }
+  }
+
+  static async getLifetimeTotal(req, res) {
+    try {
+      const { username } = req.params;
+
+      const payment = await ArchivePayment.findOne({ username }).lean();
+
+      if (!payment) {
+        return res.status(404).json({
+          error: "User not found",
+          message: `No archive payment record found for username: ${username}`,
+        });
+      }
+
+      const totalDeposit = payment["Total Deposit"] || 0;
+
+      const totalAmount = await Payment.aggregate([
+        { $match: { memberId: username } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]);
+
+      const totalAmountPaid = totalAmount[0]?.total || 0;
+
+      const combinedTotal = totalDeposit + totalAmountPaid;
+
+      res.status(200).json({
+        username: payment.username,
+        name: payment.Name,
+        totalDeposit,
+        totalAmountPaid,
+        combinedTotal,
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: "Failed to calculate deposit and live payment total",
         message: error.message,
       });
     }

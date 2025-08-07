@@ -18,7 +18,7 @@ const paymentSchema = new mongoose.Schema({
   typeOfDeposit: {
     type: String,
     required: true,
-    enum: ["BEFTN", "BANK", "NSPB"],
+    enum: ["BEFTN", "BANK", "NPSB"],
   },
   bankName: {
     type: String,
