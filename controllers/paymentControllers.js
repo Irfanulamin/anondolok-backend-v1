@@ -42,7 +42,8 @@ class PaymentController {
         totalAmount:
           parseFloat(data.monthlySubscriptionFee) +
             parseFloat(data.finesPenalty) +
-            parseFloat(data.othersAmount) || 0,
+            parseFloat(data.othersAmount) +
+            parseFloat(data.periodicalDeposit) || 0,
       });
 
       const saved = await payment.save();
