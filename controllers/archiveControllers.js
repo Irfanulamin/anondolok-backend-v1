@@ -130,6 +130,7 @@ class ArchivePaymentController {
     try {
       const { username } = req.params;
 
+      // Find archive payment record for the user
       const payment = await ArchivePayment.findOne({ username }).lean();
 
       if (!payment) {
@@ -139,21 +140,40 @@ class ArchivePaymentController {
         });
       }
 
+      // Get total deposit from archive (fallback to 0)
       const totalDeposit = payment["Total Deposit"] || 0;
 
-      const totalAmount = await Payment.aggregate([
+      // Aggregate payments to sum periodicalDeposit and monthlySubscriptionFee
+      const totals = await Payment.aggregate([
         { $match: { memberId: username } },
-        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+        {
+          $group: {
+            _id: null,
+            totalPeriodicalDeposit: { $sum: "$periodicalDeposit" },
+            totalMonthlySubscriptionFee: { $sum: "$monthlySubscriptionFee" },
+          },
+        },
       ]);
 
-      const totalAmountPaid = totalAmount[0]?.total || 0;
+      // Extract sums or default to 0
+      const totalPeriodicalDeposit = totals[0]?.totalPeriodicalDeposit || 0;
+      const totalMonthlySubscriptionFee =
+        totals[0]?.totalMonthlySubscriptionFee || 0;
 
+      // Calculate combined total from live payments
+      const totalAmountPaid =
+        totalPeriodicalDeposit + totalMonthlySubscriptionFee;
+
+      // Final combined total (archive + live)
       const combinedTotal = totalDeposit + totalAmountPaid;
 
+      // Respond with all totals and user info
       res.status(200).json({
         username: payment.username,
         name: payment.Name,
         totalDeposit,
+        totalPeriodicalDeposit,
+        totalMonthlySubscriptionFee,
         totalAmountPaid,
         combinedTotal,
       });
