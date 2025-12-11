@@ -62,7 +62,7 @@ class PaymentController {
 
       if (!user) throw new Error("User not found or inactive");
 
-      const { page = 1, limit = 10, year, month } = req.query;
+      const { year, month } = req.query;
 
       const query = { memberId: req.params.username };
 
@@ -90,8 +90,6 @@ class PaymentController {
 
       const payments = await Payment.find(query)
         .sort({ dateOfDeposit: -1 })
-        .limit(parseInt(limit))
-        .skip((parseInt(page) - 1) * parseInt(limit))
         .lean();
 
       const total = await Payment.countDocuments(query);
@@ -104,8 +102,8 @@ class PaymentController {
       res.json({
         payments,
         pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / parseInt(limit)),
+          current: 1,
+          pages: 1,
           total,
         },
         totalAmountPaid: totalAmount[0]?.total || 0,
