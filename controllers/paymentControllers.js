@@ -46,7 +46,7 @@ class PaymentController {
             parseFloat(data.periodicalDeposit) || 0,
       });
 
-      const saved = await payment.save();
+      await payment.save();
       sendSuccessResponse(res, 200, "Payment added successfully");
     } catch (err) {
       sendErrorResponse(res, 400, err.message);
@@ -124,18 +124,37 @@ class PaymentController {
     try {
       const data = req.body;
 
-      // Find and verify the user by username and isActive
       const user = await User.findOne({
         username: data.memberId,
         isActive: true,
       });
       if (!user) throw new Error("User not found or inactive");
 
-      // Find the payment record by _id
       const payment = await Payment.findById(data._id);
       if (!payment) throw new Error("Payment record not found");
 
-      // Update payment fields
+      // Optional dateOfDeposit update (same parsing logic as createPayment)
+      if (data.dateOfDeposit) {
+        let parsedDate;
+        if (
+          typeof data.dateOfDeposit === "string" &&
+          data.dateOfDeposit.includes("-") &&
+          data.dateOfDeposit.length <= 8
+        ) {
+          const [month, day, year] = data.dateOfDeposit.split("-");
+          const fullYear = year.length === 2 ? `20${year}` : year;
+          parsedDate = new Date(
+            `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+          );
+        } else {
+          parsedDate = new Date(data.dateOfDeposit);
+        }
+
+        if (isNaN(parsedDate.getTime())) throw new Error("Invalid date format");
+
+        payment.dateOfDeposit = parsedDate;
+      }
+
       payment.memberName = data.memberName;
       payment.typeOfDeposit = data.typeOfDeposit;
       payment.bankBranch = data.bankBranch;
@@ -147,14 +166,13 @@ class PaymentController {
       payment.othersAmount = parseFloat(data.othersAmount) || 0;
       payment.othersComment = data.othersComment || "";
       payment.monthsOfPayment = data.monthsOfPayment || "";
-      // Recalculate totalAmount
+
       payment.totalAmount =
         payment.monthlySubscriptionFee +
         payment.finesPenalty +
         payment.periodicalDeposit +
         payment.othersAmount;
 
-      // Save updated payment
       await payment.save();
 
       sendSuccessResponse(res, 200, "Payment updated successfully");
